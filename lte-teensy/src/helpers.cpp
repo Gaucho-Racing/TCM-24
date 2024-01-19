@@ -53,24 +53,18 @@ void leaked_nodes::concact_nodes(byte inverter[5][8], byte ecu[17][8], byte whee
 void get_nodes::take_nodes(byte nodes[768]){
         for(int i = 0; i < 40; i ++){
             inverter[i] = nodes[i];
+            wheel1[i] = nodes[i + 176];
+            wheel1[i] = nodes[i + 176];
+            wheel2[i] = nodes[i + 216];
+            wheel3[i] = nodes[i + 256];
+            wheel4[i] = nodes[i + 296];
         }
         for(int i = 0; i < 138; i ++){
             ecu[i] = nodes[i + 40];
         }
-        for(int i = 0; i < 40; i ++){
-            wheel1[i] = nodes[i + 176];
-        }
-        for(int i = 0; i < 40; i ++){
-            wheel2[i] = nodes[i + 216];
-        }
-        for(int i = 0; i < 40; i ++){
-            wheel3[i] = nodes[i + 256];
-        }
-        for(int i = 0; i < 40; i ++){
-            wheel4[i] = nodes[i + 296];
-        }
         for(int i = 0; i < 24; i ++){
             IMU[i] = nodes[i + 336];
+            Dash[i] = nodes[i + 736];
         }
         for(int i = 0; i < 32; i ++){
             GPS[i] = nodes[i + 360];
@@ -83,11 +77,6 @@ void get_nodes::take_nodes(byte nodes[768]){
         }
         for(int i = 0; i < 8; i ++){
             BCM[i] = nodes[i + 728];
-        }
-        for(int i = 0; i < 24; i ++){
-            Dash[i] = nodes[i + 736];
-        }
-        for(int i = 0; i < 8; i ++){
             EM[i] = nodes[i + 760];
         }
 }
