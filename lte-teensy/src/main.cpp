@@ -31,6 +31,9 @@ void setup(){
 }
 
 void loop(){
+
+  //this was for testing 
+  /*
   delay(1000);
   Serial.println("\nresult");
   for(int i = 0; i < 40; i++){
@@ -40,19 +43,19 @@ void loop(){
   for(int i = 0; i < 40; i++){
     Serial.print(test.only_nodes[i + 176], HEX);
   }
-
-  /*
+  */
   //Serial.print(Serial1.read());
   if(Serial1.available() > 0){
-    gen_random(768, test.only_nodes);
+    //gen_random(768, test.only_nodes);
     char chtemp = Serial1.read();
     //Serial.print(chtemp);
     if(chtemp == 0x06){
       Serial.println("\n ack recieved");
       Serial1.write(test.get_only_nodes(), 768);
+      //added this to check if it was a problem with flush 
+      Serial1.flush();
     }
   }
-  */
   /*
   delay(3000);
   byte* data = test.get_only_nodes();
