@@ -24,21 +24,37 @@ byte random_Data[768];
 void setup(){
   Serial.begin(115200);
   Serial1.begin(115200, SERIAL_8N1);
-  //test.concact_nodes(inverter, ecu, wheel1, wheel2, wheel3, wheel4, IMU, GPS, Pedals, ACU, BCM, Dash, EM);
-  gen_random(768, test.only_nodes);
+  test.concact_nodes(inverter, ecu, wheel1, wheel2, wheel3, wheel4, IMU, GPS, Pedals, ACU, BCM, Dash, EM);
+  //gen_random(768, test.only_nodes);
   result.take_nodes(test.get_only_nodes());
   
 }
 
 void loop(){
+
+  //this was for testing 
+  /*
+  delay(1000);
+  Serial.println("\nresult");
+  for(int i = 0; i < 40; i++){
+    Serial.print(result.wheel1[i], HEX);
+  };
+  Serial.println("\nsource");
+  for(int i = 0; i < 40; i++){
+    Serial.print(test.only_nodes[i + 176], HEX);
+  }
+  */
   //Serial.print(Serial1.read());
   if(Serial1.available() > 0){
-    gen_random(768, test.only_nodes);
+    //gen_random(768, test.only_nodes);
     char chtemp = Serial1.read();
     //Serial.print(chtemp);
     if(chtemp == 0x06){
       Serial.println("\n ack recieved");
       Serial1.write(test.get_only_nodes(), 768);
+      //added this to check if it was a problem with flush 
+      //this might not be important as there is no reason as to wait for flush as serial write sends all the data in onyl nodes. 
+      Serial1.flush();
     }
   }
   /*

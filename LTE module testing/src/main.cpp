@@ -309,6 +309,7 @@ void loop()
     if (!client.connected()) {
     reconnect();
   }
+  //this is used to check if mqtt pipeline is working, can be deleted later on
   byte abc[16] = {0xb4,0xaf,0x98, 0xb4,0xaf,0x98, 0xb4,0xaf,0x98, 0xb4,0xaf,0x98,0xb4,0xaf,0x98, 0x98};
   mqtt.loop();
   unsigned long now = millis();
