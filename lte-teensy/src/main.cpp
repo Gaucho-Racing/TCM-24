@@ -53,6 +53,7 @@ void loop(){
       Serial.println("\n ack recieved");
       Serial1.write(test.get_only_nodes(), 768);
       //added this to check if it was a problem with flush 
+      //this might not be important as there is no reason as to wait for flush as serial write sends all the data in onyl nodes. 
       Serial1.flush();
     }
   }
