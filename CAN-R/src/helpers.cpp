@@ -37,7 +37,7 @@ void leaked_nodes::concact_nodes(byte inverter[5][8], byte ecu[17][8], byte whee
         Serial.print(inverter1D[i]);
     }
     */
-    Serial.println("");
+    //Serial.println("");
     memcpy(only_nodes, inverter1D, 40);
     memcpy(only_nodes + 40, ecu1D, 136);
     memcpy(only_nodes + 176, wheel11D, 40);

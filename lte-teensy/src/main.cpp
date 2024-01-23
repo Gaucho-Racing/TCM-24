@@ -46,19 +46,7 @@ void loop(){
   */
   //Serial.print(Serial1.read());
   //Serial.println(HWRSerial.read());
-  if(HWRSerial.available() > 0){
-    //gen_random(768, test.only_nodes);
-    char chtemp = HWRSerial.read();
-    //Serial.print(chtemp);
-    if(chtemp == 0x06){
-      Serial.println("\n ack recieved");
-      HWRSerial.write(test.get_only_nodes(), 768);
-      Serial.println("sent");
-      //added this to check if it was a problem with flush 
-      //this might not be important as there is no reason as to wait for flush as serial write sends all the data in onyl nodes. 
-      //HWRSerial.flush();
-    }
-  }
+  
   /*
   delay(3000);
   byte* data = test.get_only_nodes();

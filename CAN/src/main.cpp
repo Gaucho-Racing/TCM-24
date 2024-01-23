@@ -42,7 +42,7 @@ void loop() {
   canPrimary.write(msgPrimary);
   Serial.println("Frame sent!");
 
-  delay(1000);  // Adjust the delay according to your needs
+  delay(10);  // Adjust the delay according to your needs
 
   suspensionPos += 5;
   wheelSpeed += 69;

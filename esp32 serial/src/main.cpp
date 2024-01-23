@@ -46,8 +46,8 @@ void loop() {
     clear = true;
     request = false;
     result.take_nodes(data);
-    for(int i = 0; i < 40; i++){
-      Serial.print(result.wheel3[i], HEX);
+    for(int i = 0; i < 8; i++){
+      Serial.print(result.EM[i], DEC);
     }
   }
 }
