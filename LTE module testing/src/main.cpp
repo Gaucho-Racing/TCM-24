@@ -1,8 +1,11 @@
 #include <Arduino.h>
+#include "send_nodes.h"
+
 #define TINY_GSM_MODEM_SIM7600
+
 #define SerialMon Serial //for USB communication 
 #define SerialAT Serial1 //for communication with the LTE module
-#define SerialTen Serial2 //need this if we are going the teensey route
+
 #define TINY_GSM_DEBUG SerialMon
 // Add a reception delay, if needed.
 // This may be needed for a fast processor at a slow baud rate.
@@ -12,6 +15,14 @@
 // These defines are only for this example; they are not needed in other code.
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI false
+
+//needed for Serial to be decoded
+bool request;
+get_nodes result;
+unsigned long requestTime;
+bool clear;
+unsigned long lastMsg;
+
 /*
 TODO: 
 1. write the code needed to send CAN frames from teensy to the esp 32 vie the serial 2 ports. This will need some sort of ID
@@ -42,10 +53,10 @@ const char wifiPass[] = "xx";
 
 // MQTT details
 
-const char* mqtt_server = "4.tcp.ngrok.io"; //replace with ngrok from mpache
-const char* mqtt_username = "gr24"; // replace with your Username
-const char* mqtt_password = "gr24"; // replace with your Password
-const int mqtt_port = 11018;
+const char* mqtt_server = "137.184.112.111"; //replace with ngrok from mpache
+const char* mqtt_username = "guest"; // replace with your Username
+const char* mqtt_password = "guest"; // replace with your Password
+const int mqtt_port = 1883;
 
 
 #include <TinyGsmClient.h>
@@ -103,10 +114,7 @@ Ticker tick;
 #define SD_CS       13
 #define LED_PIN     12
 
-
-
 int ledStatus = LOW;
-
 uint32_t lastReconnectAttempt = 0;
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
@@ -145,14 +153,17 @@ void reconnect() {
 void setup()
 {
     // Set console baud rate
+    Serial.setRxBufferSize(1024);
     Serial.begin(115200);
+    
+    request = false;
+    clear = true;
     delay(10);
     SerialAT.begin(UART_BAUD, SERIAL_8N1, MODEM_RX, MODEM_TX);
     
     // Set LED OFF
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH);
-
     pinMode(MODEM_PWRKEY, OUTPUT);
     digitalWrite(MODEM_PWRKEY, HIGH);
     delay(300);
@@ -209,22 +220,6 @@ void setup()
     }
 #endif
 
-#if TINY_GSM_USE_WIFI
-    // Wifi connection parameters must be set before waiting for the network
-    SerialMon.print(F("Setting SSID/password..."));
-    if (!modem.networkConnect(wifiSSID, wifiPass)) {
-        SerialMon.println(" fail");
-        delay(10000);
-        return;
-    }
-    SerialMon.println(" success");
-#endif
-
-#if TINY_GSM_USE_GPRS && defined TINY_GSM_MODEM_XBEE
-    // The XBee must run the gprsConnect function BEFORE waiting for network!
-    modem.gprsConnect(apn, gprsUser, gprsPass);
-#endif
-
     SerialMon.print("Waiting for network...");
     if (!modem.waitForNetwork()) {
         SerialMon.println(" fail");
@@ -258,8 +253,9 @@ void setup()
     mqtt.setCallback(mqttCallback);
 
 }
-unsigned long lastMsg;
 
+
+//not really needed
 void gen_random(const int len, char *res) {
     static const char alphanum[] =
         "0123456789"
@@ -270,13 +266,11 @@ void gen_random(const int len, char *res) {
   char tmp[16];
   itoa(millis(), tmp, 10);
   strcat(res, tmp);
-
 }
 
 void loop()
 {
-
-    // Make sure we're still registered on the network
+    //connections statements for network and gps
     if (!modem.isNetworkConnected()) {
         SerialMon.println("Network disconnected");
         if (!modem.waitForNetwork(180000L, true)) {
@@ -288,7 +282,7 @@ void loop()
             SerialMon.println("Network re-connected");
         }
 
-#if TINY_GSM_USE_GPRS
+    #if TINY_GSM_USE_GPRS
         // and make sure GPRS/EPS is still connected
         if (!modem.isGprsConnected()) {
             SerialMon.println("GPRS disconnected!");
@@ -303,30 +297,58 @@ void loop()
                 SerialMon.println("GPRS reconnected");
             }
         }
-#endif
+    #endif
     }
 
+    //tiny gsm force reconnect
     if (!client.connected()) {
-    reconnect();
-  }
-  //this is used to check if mqtt pipeline is working, can be deleted later on
-  byte abc[16] = {0xb4,0xaf,0x98, 0xb4,0xaf,0x98, 0xb4,0xaf,0x98, 0xb4,0xaf,0x98,0xb4,0xaf,0x98, 0x98};
-  mqtt.loop();
-  unsigned long now = millis();
-  if (now - lastMsg > 1000) {
-    lastMsg = now;
-    char msg[16];
-    itoa(millis(), msg, 10);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    mqtt.publish("meta", abc, 16);
-  }
-  /*
-  char chtemp;
-  Serial.print(Serial.available() > 0);
-  if(Serial.available() > 0){
-    chtemp = Serial.read();
-    Serial.print(chtemp);
-  }
-  */
+        reconnect();
+    }
+    
+    //code from es32 serial
+    //sends a request every time its ready to recieve more data
+    byte data[768];
+    if(!request){
+        Serial.write(0x06);
+        requestTime = millis();
+        request = true;
+    }
+
+    //every second try to read serial and if nothing clears the buffer
+    unsigned long now_packet = millis();
+    if(now_packet - requestTime > 1000){
+        Serial.write(0x06);
+        requestTime = now_packet;
+        Serial.print(Serial.available());
+        Serial.print("clear");
+        while(Serial.available()){
+            Serial.read();
+        }
+    }
+
+    //serial read
+    if(Serial.available() >= 768){
+        Serial.readBytes(data, 768);
+        clear = true;
+        request = false;
+        result.take_nodes(data);
+    }
+
+    //no clue what mqtt.loop() does but its probably important
+    mqtt.loop();
+    //loop that sends a mqtt packet every second 
+    unsigned long now_mqtt = millis();
+    if (now_mqtt - lastMsg > 1000) {
+        lastMsg = now_mqtt;
+        char msg[16];
+        itoa(millis(), msg, 10);
+        Serial.print("Publish message: ");
+        for(int i = 0 ; i < 16; i ++){
+            Serial.print(result.Pedals[i]);
+        }
+        mqtt.publish("meta", result.Pedals, 16);
+        Serial.println();
+    }
+
+    
 }

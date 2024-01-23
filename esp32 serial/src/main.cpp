@@ -30,24 +30,11 @@ void loop() {
       }
     }
   }
-  /*
-  while(Serial.available()){
-    Serial.print(Serial.read());
-  }
-  */
-  //Serial.println(Serial.available());
   if(Serial.available() >= 768){
     Serial.readBytes(data, 768);
-    /*
-    for(int i = 0; i < 768; i++){
-      Serial.print(data[i], HEX);
-    }
-    */
     clear = true;
     request = false;
     result.take_nodes(data);
-    for(int i = 0; i < 8; i++){
-      Serial.print(result.EM[i], DEC);
-    }
+    Serial.println(result.EM[3]);
   }
 }
