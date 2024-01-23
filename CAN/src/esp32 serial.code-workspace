@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "../../esp32 serial"
+		},
+		{
+			"path": "../../lte-teensy"
+		},
+		{
+			"name": "CAN",
+			"path": ".."
+		},
+		{
+			"path": "../../CAN-R"
+		},
+		{
+			"path": "../../LTE module testing"
+		}
+	],
+	"settings": {}
+}
