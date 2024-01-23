@@ -13,6 +13,7 @@ CANFD_message_t msgData;
 byte suspensionPos = 0;
 int wheelSpeed = 0;
 byte tirePressure = 0;
+CAN_message_t msg;
 
 void setup() {
   Serial.begin(115200);
@@ -33,18 +34,7 @@ void setup() {
 }
 
 void loop() {
-  msgPrimary.id = 0x2AB;
-  msgPrimary.len = 4;
-  msgPrimary.buf[0] = suspensionPos;
-  msgPrimary.buf[1] = (byte)(wheelSpeed >> 8);
-  msgPrimary.buf[2] = (byte)wheelSpeed;
-  msgPrimary.buf[3] = tirePressure;
-  canPrimary.write(msgPrimary);
-  Serial.println("Frame sent!");
-
-  delay(1000);  // Adjust the delay according to your needs
-
-  suspensionPos += 5;
-  wheelSpeed += 69;
-  tirePressure += 1;
+  if(canPrimary.read(msg)){
+    Serial.println(msg.id, HEX);
+  }
 }
