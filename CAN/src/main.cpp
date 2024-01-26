@@ -11,9 +11,10 @@ CANFD_message_t msgData;
 #define AteMbps 8000000
 
 byte suspensionPos = 0;
-int wheelSpeed = 0;
-byte tirePressure = 0;
-
+unsigned int wheelSpeed = 0;
+unsigned int tirePressure = 0;
+unsigned int APPS1 = 0;
+unsigned int APPS2 = 0;
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -34,16 +35,27 @@ void setup() {
 
 void loop() {
   msgPrimary.id = 0x2AB;
-  msgPrimary.len = 4;
-  msgPrimary.buf[0] = suspensionPos;
-  msgPrimary.buf[1] = (byte)(wheelSpeed >> 8);
-  msgPrimary.buf[2] = (byte)wheelSpeed;
-  msgPrimary.buf[3] = tirePressure;
+  msgPrimary.len = 8;
+  msgPrimary.buf[0] = (byte)(APPS1 >> 8);
+  msgPrimary.buf[1] = (byte)(APPS1);
+  msgPrimary.buf[2] = (byte)(APPS2 >> 8);
+  msgPrimary.buf[3] = (byte)(APPS2);
+  msgPrimary.buf[4] = (byte)(wheelSpeed >> 8);
+  msgPrimary.buf[5] = (byte)wheelSpeed;
+  msgPrimary.buf[6] = (byte)(tirePressure >> 8);
+  msgPrimary.buf[7] = (byte)tirePressure;
   canPrimary.write(msgPrimary);
   Serial.println("Frame sent!");
 
-  delay(1);  // Adjust the delay according to your needs
-
+  delay(1000);  // Adjust the delay according to your needs
+  APPS1 += 1000;
+  if(APPS1 > 10000){
+    APPS1 = 0;
+  }
+  APPS2 += 1000;
+  if(APPS2 > 10000){
+    APPS2 = 0;
+  }
   suspensionPos += 5;
   wheelSpeed += 69;
   tirePressure += 1;

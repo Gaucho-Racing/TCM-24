@@ -344,7 +344,7 @@ void loop()
         itoa(millis(), msg, 10);
         Serial.print("Publish message: ");
         for(int i = 0 ; i < 16; i ++){
-            Serial.print(result.Pedals[i]);
+            Serial.print(result.Pedals[i], DEC);
         }
         mqtt.publish("meta", result.Pedals, 16);
         Serial.println();

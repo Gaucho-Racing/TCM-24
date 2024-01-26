@@ -60,7 +60,12 @@ void loop() {
   if(canPrimary.read(msg)){
     Serial.println(msg.id, HEX);
   }
-  test.concact_nodes(inverter, ecu, wheel1, wheel2, wheel3, wheel4, IMU, GPS, Pedals, ACU, BCM, Dash, msg.buf);
+  for(int i = 0; i < 8; i ++){
+    Pedals[0][i] = msg.buf[i];
+    Serial.println(Pedals[0][i]);
+  }
+  
+  test.concact_nodes(inverter, ecu, wheel1, wheel2, wheel3, wheel4, IMU, GPS, Pedals, ACU, BCM, Dash, EM);
   if(HWRSerial.available() > 0){
     //gen_random(768, test.only_nodes);
     char chtemp = HWRSerial.read();
