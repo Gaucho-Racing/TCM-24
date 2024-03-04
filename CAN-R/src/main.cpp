@@ -62,7 +62,7 @@ void loop() {
   }
   for(int i = 0; i < 8; i ++){
     Pedals[0][i] = msg.buf[i];
-    Serial.println(Pedals[0][i]);
+    Serial.println(msg.buf[i]);
   }
   
   test.concact_nodes(inverter, ecu, wheel1, wheel2, wheel3, wheel4, IMU, GPS, Pedals, ACU, BCM, Dash, EM);

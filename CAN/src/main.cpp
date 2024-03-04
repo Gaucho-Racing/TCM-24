@@ -48,15 +48,15 @@ void loop() {
   Serial.println("Frame sent!");
 
   delay(1000);  // Adjust the delay according to your needs
-  APPS1 += 1000;
-  if(APPS1 > 10000){
+  APPS1 += 1;
+  if(APPS1 > 100){
     APPS1 = 0;
   }
-  APPS2 += 1000;
-  if(APPS2 > 10000){
+  APPS2 += 10;
+  if(APPS2 > 100){
     APPS2 = 0;
   }
-  suspensionPos += 5;
-  wheelSpeed += 69;
-  tirePressure += 1;
+  suspensionPos = 0;
+  wheelSpeed = 0;
+  tirePressure = 0;
 }
