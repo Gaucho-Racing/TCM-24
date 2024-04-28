@@ -23,7 +23,7 @@ adding stuff for the gps
 */
 #define TINY_GSM_MODEM_SIM7600
 #define TINY_GSM_RX_BUFFER 1024 // Set RX buffer to 1Kb
-#define DUMP_AT_COMMANDS
+//#define DUMP_AT_COMMANDS
 
 
 //needed for Serial to be decoded
@@ -49,10 +49,10 @@ const char wifiPass[] = "xx";
 
 // MQTT details
 //4.tcp.ngrok.io:17717
-const char* mqtt_server = "4.tcp.ngrok.io"; //replace with ngrok from mpache
+const char* mqtt_server = "137.184.112.111"; //replace with ngrok from mpache
 const char* mqtt_username = "gr24"; // replace with your Username
 const char* mqtt_password = "gr24"; // replace with your Password
-const int mqtt_port = 17717;
+const int mqtt_port = 1883;
 
 
 #include <TinyGsmClient.h>
@@ -68,8 +68,7 @@ const int mqtt_port = 17717;
 
 TinyGPSPlus gps;
 void displayInfo();
-StreamDebugger debugger(SerialAT, Serial);
-TinyGsm modem(debugger);
+
 
 
 // Just in case someone defined the wrong thing..
@@ -181,19 +180,7 @@ void setup()
     */
     pinMode(MODEM_FLIGHT, OUTPUT);
     digitalWrite(MODEM_FLIGHT, HIGH);
-    /*
-    SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
-    if (!SD.begin(SD_CS)) {
-        Serial.println("SDCard MOUNT FAIL");
-    } else {
-        uint32_t cardSize = SD.cardSize() / (1024 * 1024);
-        String str = "SDCard Size: " + String(cardSize) + "MB";
-        Serial.println(str);
-    }
-    */
-
-    Serial.println("\nWait...");
-
+    
     delay(1000);
 
 
@@ -339,11 +326,8 @@ void loop()
     }
 
     //gps code 
-    while (SerialAT.available()) {
-        if (gps.encode(SerialAT.read())) {
-            displayInfo();
-        }
-    }
+    
+
     
     
     //code from es32 serial
@@ -389,6 +373,9 @@ void loop()
         }
         mqtt.publish("gr24/pedal", result.Pedals, 16);
         Serial.println();
+        Serial.println("gps");
+        displayInfo();
+
     }
 
     

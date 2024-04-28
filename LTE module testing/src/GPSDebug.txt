@@ -14,11 +14,11 @@
 #define SerialAT Serial1
 
 // See all AT commands, if wanted
-#define DUMP_AT_COMMANDS
+//#define DUMP_AT_COMMANDS
 
 
 // Use TinyGPS NMEA math analysis library
-#define USING_TINYGPS_LIBRARY           //https://github.com/mikalhart/TinyGPSPlus.git
+#define USING_TINYGPS_LIBRARY          // https://github.com/mikalhart/TinyGPSPlus.git
 
 // set GSM PIN, if any
 #define GSM_PIN ""
@@ -107,11 +107,6 @@ void setup()
     // Download Report GPS NMEA-0183 sentence , NMEA TO AT PORT
     modem.sendAT("+CGPSINFOCFG=1,31");
     modem.waitResponse(30000);
-
-
-    //Disable NMEA OUTPUT
-    // modem.sendAT("+CGPSINFOCFG=0,31");
-    // modem.waitResponse(30000);
 }
 
 void loop()
@@ -123,19 +118,11 @@ void loop()
             displayInfo();
         }
     }
-#else
-    if (SerialAT.available()) {
-        Serial.write(SerialAT.read());
-    }
-    if (Serial.available()) {
-        SerialAT.write(Serial.read());
-    }
 #endif
     delay(1);
 }
 
 
-#ifdef USING_TINYGPS_LIBRARY
 void displayInfo()
 {
     Serial.print(F("Location: "));
@@ -177,4 +164,3 @@ void displayInfo()
 
     Serial.println();
 }
-#endif
