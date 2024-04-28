@@ -16,16 +16,6 @@
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI false
 
-
-
-/*
-adding stuff for the gps 
-*/
-#define TINY_GSM_MODEM_SIM7600
-#define TINY_GSM_RX_BUFFER 1024 // Set RX buffer to 1Kb
-//#define DUMP_AT_COMMANDS
-
-
 //needed for Serial to be decoded
 bool request;
 get_nodes result;
@@ -33,6 +23,20 @@ unsigned long requestTime;
 bool clear;
 unsigned long lastMsg;
 
+/*
+TODO: 
+1. write the code needed to send CAN frames from teensy to the esp 32 vie the serial 2 ports. This will need some sort of ID
+bits or like an ID byte inorder to specify what kind of byte array is coming from the teensy.
+ -figure out how to efficiently add some ID bytes/bits to the start of very CAN frame that gets sent to the serial monitor
+ this would allow for ease of implementation and classification later on.
+2. implement a fucntion that take information from the serial 2 pins and sort them into thier respective 
+topics for sending to cloud.
+ -Remove the ID byte or bits from the data incoming, this will most likely be done with some header nad external file to make the code less
+ fucking ugly 
+3. Work on getting the topics to properly send into the correct channels.
+ -Convert to sending byte arrays rather than the goofy shit I hva currently 
+ -Specify all the topics based on the CAN on google sheets. 
+*/
 
 // set GSM PIN, if any
 #define GSM_PIN ""
@@ -48,7 +52,7 @@ const char wifiSSID[] = "xx";
 const char wifiPass[] = "xx";
 
 // MQTT details
-//4.tcp.ngrok.io:17717
+
 const char* mqtt_server = "137.184.112.111"; //replace with ngrok from mpache
 const char* mqtt_username = "gr24"; // replace with your Username
 const char* mqtt_password = "gr24"; // replace with your Password
@@ -60,16 +64,6 @@ const int mqtt_port = 1883;
 #include <Ticker.h>
 #include <SPI.h>
 #include <SD.h>
-#include <TinyGsmClient.h>
-#include "utilities.h"
-#include <TinyGPS++.h>
-#include <StreamDebugger.h>
-
-
-TinyGPSPlus gps;
-void displayInfo();
-
-
 
 // Just in case someone defined the wrong thing..
 #if TINY_GSM_USE_GPRS && not defined TINY_GSM_MODEM_HAS_GPRS
@@ -98,6 +92,8 @@ PubSubClient  mqtt(client);
 
 
 Ticker tick;
+
+
 
 #define uS_TO_S_FACTOR 1000000ULL  // Conversion factor for micro seconds to seconds
 #define TIME_TO_SLEEP  60          // Time ESP32 will go to sleep (in seconds)
@@ -180,7 +176,18 @@ void setup()
     */
     pinMode(MODEM_FLIGHT, OUTPUT);
     digitalWrite(MODEM_FLIGHT, HIGH);
-    
+
+    // SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+    // if (!SD.begin(SD_CS)) {
+    //     Serial.println("SDCard MOUNT FAIL");
+    // } else {
+    //     uint32_t cardSize = SD.cardSize() / (1024 * 1024);
+    //     String str = "SDCard Size: " + String(cardSize) + "MB";
+    //     Serial.println(str);
+    // }
+
+    Serial.println("\nWait...");
+
     delay(1000);
 
 
@@ -240,46 +247,6 @@ void setup()
         SerialMon.println("GPRS connected");
     }
 #endif
-    //gps setup
-
-    Serial.println("Start modem...");
-
-
-    for (int i = 0; i < 3; ++i) {
-        while (!modem.testAT(5000)) {
-            Serial.println("Try to start modem...");
-            pinMode(MODEM_PWRKEY, OUTPUT);
-            digitalWrite(MODEM_PWRKEY, HIGH);
-            delay(300); //Need delay
-            digitalWrite(MODEM_PWRKEY, LOW);
-        }
-    }
-
-    Serial.println("Modem Response Started.");
-
-    // Stop GPS Server
-    modem.sendAT("+CGPS=0");
-    modem.waitResponse(30000);
-
-    // Configure GNSS support mode
-    modem.sendAT("+CGNSSMODE=15,1");
-    modem.waitResponse(30000);
-
-    // Configure NMEA sentence type
-    modem.sendAT("+CGPSNMEA=200191");
-    modem.waitResponse(30000);
-
-    // Set NMEA output rate to 1HZ
-    modem.sendAT("+CGPSNMEARATE=1");
-    modem.waitResponse(30000);
-
-    // Enable GPS
-    modem.sendAT("+CGPS=1");
-    modem.waitResponse(30000);
-
-    // Download Report GPS NMEA-0183 sentence , NMEA TO AT PORT
-    modem.sendAT("+CGPSINFOCFG=1,31");
-    modem.waitResponse(30000);
 
     // MQTT mqtt_server setup
     mqtt.setServer(mqtt_server, mqtt_port);
@@ -287,6 +254,19 @@ void setup()
 
 }
 
+
+//not really needed
+void gen_random(const int len, char *res) {
+    static const char alphanum[] =
+        "0123456789"
+        "abcdef";
+    for (int i = 0, p = 0; i < len; ++i) {
+        res[i] = alphanum[int(random(0, sizeof(alphanum) - 1))];
+    }
+  char tmp[16];
+  itoa(millis(), tmp, 10);
+  strcat(res, tmp);
+}
 
 void loop()
 {
@@ -321,20 +301,17 @@ void loop()
     }
 
     //tiny gsm force reconnect
+    
     if (!client.connected()) {
         reconnect();
     }
-
-    //gps code 
-    
-
-    
     
     //code from es32 serial
     //sends a request every time its ready to recieve more data
     byte data[768];
     if(!request){
         Serial.write(0x06);
+        Serial.println("here");
         requestTime = millis();
         request = true;
     }
@@ -342,13 +319,16 @@ void loop()
     //every second try to read serial and if nothing clears the buffer
     unsigned long now_packet = millis();
     if(now_packet - requestTime > 1000){
-        Serial.write(0x06);
         requestTime = now_packet;
         Serial.print(Serial.available());
         Serial.print("clear");
+        if(clear){
         while(Serial.available()){
             Serial.read();
         }
+        }
+        Serial.write(0x06);
+        clear = false;
     }
 
     //serial read
@@ -356,67 +336,40 @@ void loop()
         Serial.readBytes(data, 768);
         clear = true;
         request = false;
+        Serial.print("read");
         result.take_nodes(data);
-    }
-
-    //no clue what mqtt.loop() does but its probably important
-    mqtt.loop();
-    //loop that sends a mqtt packet every second 
-    unsigned long now_mqtt = millis();
-    if (now_mqtt - lastMsg > 1000) {
+        unsigned long now_mqtt = millis();
+        if (now_mqtt - lastMsg > 1000) {
         lastMsg = now_mqtt;
         char msg[16];
         itoa(millis(), msg, 10);
         Serial.print("Publish message: ");
         for(int i = 0 ; i < 16; i ++){
-            Serial.print(result.Pedals[i], DEC);
+            Serial.print(result.Pedals[i], HEX);
         }
         mqtt.publish("gr24/pedal", result.Pedals, 16);
         Serial.println();
-        Serial.println("gps");
-        displayInfo();
-
     }
+    }
+
+    //no clue what mqtt.loop() does but its probably important
+    mqtt.loop();
+    //loop that sends a mqtt packet every second 
+    /*
+    unsigned long now_mqtt = millis();
+    if (now_mqtt - lastMsg > 10) {
+        lastMsg = now_mqtt;
+        char msg[16];
+        itoa(millis(), msg, 10);
+        Serial.print("Publish message: ");
+        for(int i = 0 ; i < 16; i ++){
+            Serial.print(result.Pedals[i], HEX);
+        }
+        //mqtt.publish("meta", result.Pedals, 16);
+        Serial.println();
+    }
+    */
+   
 
     
-}
-void displayInfo()
-{
-    Serial.print(F("Location: "));
-    if (gps.location.isValid()) {
-        Serial.print(gps.location.lat(), 6);
-        Serial.print(F(","));
-        Serial.print(gps.location.lng(), 6);
-    } else {
-        Serial.print(F("INVALID"));
-    }
-
-    Serial.print(F("  Date/Time: "));
-    if (gps.date.isValid()) {
-        Serial.print(gps.date.month());
-        Serial.print(F("/"));
-        Serial.print(gps.date.day());
-        Serial.print(F("/"));
-        Serial.print(gps.date.year());
-    } else {
-        Serial.print(F("INVALID"));
-    }
-
-    Serial.print(F(" "));
-    if (gps.time.isValid()) {
-        if (gps.time.hour() < 10) Serial.print(F("0"));
-        Serial.print(gps.time.hour());
-        Serial.print(F(":"));
-        if (gps.time.minute() < 10) Serial.print(F("0"));
-        Serial.print(gps.time.minute());
-        Serial.print(F(":"));
-        if (gps.time.second() < 10) Serial.print(F("0"));
-        Serial.print(gps.time.second());
-        Serial.print(F("."));
-        if (gps.time.centisecond() < 10) Serial.print(F("0"));
-        Serial.print(gps.time.centisecond());
-    } else {
-        Serial.print(F("INVALID"));
-    }
-    Serial.println();
 }
