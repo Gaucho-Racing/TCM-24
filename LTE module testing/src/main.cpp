@@ -54,8 +54,8 @@ const char wifiPass[] = "xx";
 // MQTT details
 
 const char* mqtt_server = "137.184.112.111"; //replace with ngrok from mpache
-const char* mqtt_username = "guest"; // replace with your Username
-const char* mqtt_password = "guest"; // replace with your Password
+const char* mqtt_username = "gr24"; // replace with your Username
+const char* mqtt_password = "gr24"; // replace with your Password
 const int mqtt_port = 1883;
 
 
@@ -177,14 +177,14 @@ void setup()
     pinMode(MODEM_FLIGHT, OUTPUT);
     digitalWrite(MODEM_FLIGHT, HIGH);
 
-    SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
-    if (!SD.begin(SD_CS)) {
-        Serial.println("SDCard MOUNT FAIL");
-    } else {
-        uint32_t cardSize = SD.cardSize() / (1024 * 1024);
-        String str = "SDCard Size: " + String(cardSize) + "MB";
-        Serial.println(str);
-    }
+    // SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+    // if (!SD.begin(SD_CS)) {
+    //     Serial.println("SDCard MOUNT FAIL");
+    // } else {
+    //     uint32_t cardSize = SD.cardSize() / (1024 * 1024);
+    //     String str = "SDCard Size: " + String(cardSize) + "MB";
+    //     Serial.println(str);
+    // }
 
     Serial.println("\nWait...");
 
@@ -301,6 +301,7 @@ void loop()
     }
 
     //tiny gsm force reconnect
+    
     if (!client.connected()) {
         reconnect();
     }
@@ -310,6 +311,7 @@ void loop()
     byte data[768];
     if(!request){
         Serial.write(0x06);
+        Serial.println("here");
         requestTime = millis();
         request = true;
     }
@@ -317,13 +319,16 @@ void loop()
     //every second try to read serial and if nothing clears the buffer
     unsigned long now_packet = millis();
     if(now_packet - requestTime > 1000){
-        Serial.write(0x06);
         requestTime = now_packet;
         Serial.print(Serial.available());
         Serial.print("clear");
+        if(clear){
         while(Serial.available()){
             Serial.read();
         }
+        }
+        Serial.write(0x06);
+        clear = false;
     }
 
     //serial read
@@ -331,24 +336,40 @@ void loop()
         Serial.readBytes(data, 768);
         clear = true;
         request = false;
+        Serial.print("read");
         result.take_nodes(data);
-    }
-
-    //no clue what mqtt.loop() does but its probably important
-    mqtt.loop();
-    //loop that sends a mqtt packet every second 
-    unsigned long now_mqtt = millis();
-    if (now_mqtt - lastMsg > 1000) {
+        unsigned long now_mqtt = millis();
+        if (now_mqtt - lastMsg > 1000) {
         lastMsg = now_mqtt;
         char msg[16];
         itoa(millis(), msg, 10);
         Serial.print("Publish message: ");
         for(int i = 0 ; i < 16; i ++){
-            Serial.print(result.Pedals[i], DEC);
+            Serial.print(result.Pedals[i], HEX);
         }
-        mqtt.publish("meta", result.Pedals, 16);
+        mqtt.publish("gr24/pedal", result.Pedals, 16);
         Serial.println();
     }
+    }
+
+    //no clue what mqtt.loop() does but its probably important
+    mqtt.loop();
+    //loop that sends a mqtt packet every second 
+    /*
+    unsigned long now_mqtt = millis();
+    if (now_mqtt - lastMsg > 10) {
+        lastMsg = now_mqtt;
+        char msg[16];
+        itoa(millis(), msg, 10);
+        Serial.print("Publish message: ");
+        for(int i = 0 ; i < 16; i ++){
+            Serial.print(result.Pedals[i], HEX);
+        }
+        //mqtt.publish("meta", result.Pedals, 16);
+        Serial.println();
+    }
+    */
+   
 
     
 }
