@@ -58,7 +58,6 @@ const char* mqtt_username = "gr24"; // replace with your Username
 const char* mqtt_password = "gr24"; // replace with your Password
 const int mqtt_port = 1883;
 
-
 #include <TinyGsmClient.h>
 #include <PubSubClient.h>
 #include <Ticker.h>
@@ -78,7 +77,7 @@ const int mqtt_port = 1883;
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI false
 #endif
-
+#define DUMP_AT_COMMANDS
 #ifdef DUMP_AT_COMMANDS
 #include <StreamDebugger.h>
 StreamDebugger debugger(SerialAT, SerialMon);
@@ -155,7 +154,6 @@ void setup()
     // Set console baud rate
     Serial.setRxBufferSize(1024);
     Serial.begin(115200);
-    
     request = false;
     clear = true;
     delay(10);
@@ -339,37 +337,28 @@ void loop()
         Serial.print("read");
         result.take_nodes(data);
         unsigned long now_mqtt = millis();
-        if (now_mqtt - lastMsg > 1000) {
+        if (now_mqtt - lastMsg >100) {
         lastMsg = now_mqtt;
         char msg[16];
         itoa(millis(), msg, 10);
         Serial.print("Publish message: ");
-        for(int i = 0 ; i < 16; i ++){
+        for(int i = 0 ; i < 8; i ++){
             Serial.print(result.Pedals[i], HEX);
         }
-        mqtt.publish("gr24/pedal", result.Pedals, 16);
+        mqtt.publish("gr24/pedal", result.Pedals, 8);
         Serial.println();
     }
+    }
+    unsigned long now_mqtt = millis();
+    if (now_mqtt - lastMsg >10) {
+        lastMsg = now_mqtt;
+        char msg[16];
+        itoa(millis(), msg, 10);
+        Serial.print("Publish message: ");
+        mqtt.publish("gr24/pedal", result.Pedals, 8);
+        Serial.println();
     }
 
     //no clue what mqtt.loop() does but its probably important
-    mqtt.loop();
-    //loop that sends a mqtt packet every second 
-    /*
-    unsigned long now_mqtt = millis();
-    if (now_mqtt - lastMsg > 10) {
-        lastMsg = now_mqtt;
-        char msg[16];
-        itoa(millis(), msg, 10);
-        Serial.print("Publish message: ");
-        for(int i = 0 ; i < 16; i ++){
-            Serial.print(result.Pedals[i], HEX);
-        }
-        //mqtt.publish("meta", result.Pedals, 16);
-        Serial.println();
-    }
-    */
-   
-
-    
+    mqtt.loop();   
 }
