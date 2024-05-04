@@ -53,7 +53,7 @@ const char wifiPass[] = "xx";
 
 // MQTT details
 
-const char* mqtt_server = "137.184.112.111"; //replace with ngrok from mpache
+const char* mqtt_server = "mapache.gauchoracing.com"; //replace with ngrok from mpache
 const char* mqtt_username = "gr24"; // replace with your Username
 const char* mqtt_password = "gr24"; // replace with your Password
 const int mqtt_port = 1883;
@@ -77,7 +77,7 @@ const int mqtt_port = 1883;
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI false
 #endif
-#define DUMP_AT_COMMANDS
+//#define DUMP_AT_COMMANDS
 #ifdef DUMP_AT_COMMANDS
 #include <StreamDebugger.h>
 StreamDebugger debugger(SerialAT, SerialMon);
@@ -339,25 +339,36 @@ void loop()
         unsigned long now_mqtt = millis();
         if (now_mqtt - lastMsg >100) {
         lastMsg = now_mqtt;
-        char msg[16];
-        itoa(millis(), msg, 10);
-        Serial.print("Publish message: ");
-        for(int i = 0 ; i < 8; i ++){
+        byte msg[8];
+        unsigned long now = millis();
+        result.Pedals[8] = 0x00;
+        result.Pedals[9] = 0x00;
+        result.Pedals[10] = 0x00;
+        result.Pedals[11] = 0x00;
+        result.Pedals[11] = (byte) now;
+        result.Pedals[10] = (byte) (now >> 8);
+        result.Pedals[9] = (byte) (now >> 16);
+        result.Pedals[8] = (byte) (now >> 24);
+        Serial.println(now, HEX);
+        for(int i = 8 ; i < 12; i ++){
             Serial.print(result.Pedals[i], HEX);
         }
-        mqtt.publish("gr24/pedal", result.Pedals, 8);
-        Serial.println();
+        mqtt.publish("gr24/pedal", result.Pedals, 16);
+        //Serial.println();
     }
     }
-    unsigned long now_mqtt = millis();
-    if (now_mqtt - lastMsg >10) {
-        lastMsg = now_mqtt;
-        char msg[16];
-        itoa(millis(), msg, 10);
-        Serial.print("Publish message: ");
-        mqtt.publish("gr24/pedal", result.Pedals, 8);
-        Serial.println();
-    }
+    // unsigned long now_mqtt = millis();
+    // if (now_mqtt - lastMsg > 100) {
+    //     lastMsg = now_mqtt;
+    //     char msg[16];
+    //     itoa(millis(), msg, 8);
+    //     // Serial.print("Publish message: ");
+    //     // for(int i = 0 ; i < 8; i ++){
+    //     //     Serial.print(msg[i], HEX);
+    //     // }
+    //     mqtt.publish("gr24/pedal", msg, 8);
+    //     //Serial.println();
+    // }
 
     //no clue what mqtt.loop() does but its probably important
     mqtt.loop();   

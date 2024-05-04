@@ -4,7 +4,7 @@
 #include "icanflex.h"
 #include "Nodes.h"
 #include <iostream>
-#define HWRSerial Serial3
+#define HWRSerial Serial1
 
 leaked_nodes test;
 get_nodes result;
@@ -25,7 +25,7 @@ byte wheel3[5][8]= {0x69};
 byte wheel4[5][8]= {0x70};
 byte IMU[3][8] = {0x71};
 byte GPS[4][8] = {0x72};
-byte Pedals[2][8] = {0x00};
+//byte Pedals[2][8] = {0x00};
 byte ACU[40][8] = {0x74};
 byte BCM[8] = {0x75};
 byte Dash[3][8] = {0x76};
@@ -38,16 +38,15 @@ void setup() {
   delay(100);
   //Serial.begin(115200);
   HWRSerial.begin(115200, SERIAL_8N1);
-  
-  Car = new iCANflex();
-  Car->begin();
-
-  //gen_random(768, test.only_nodes);
-  result.take_nodes(test.get_only_nodes());
-
-  // Initialize the CAN bus
   can1.begin();
   can1.setBaudRate(JuanMbps);
+  Car = new iCANflex();
+  //Car->begin();
+
+  //gen_random(768, test.only_nodes);
+  //result.take_nodes(test.get_only_nodes());
+
+  // Initialize the CAN bus
   // canData.begin();
   // CANFD_timings_t config;
   // config.clock = CLK_24MHz;
@@ -60,26 +59,32 @@ void setup() {
 }
 
 void loop() {
+  if(can1.read(msg)){
+    Car->readData(msg);
+  }
+  //delay(1);
   //Car->readData(msg);
-  can1.read(msg);
-  if(msg.id == 0xC8){
-  for(int i =0; i < 8; i++){
-    //Serial.print(msg.buf[i], HEX);
-    Pedals[0][i] = msg.buf[i];
-  }
-  }
-  Serial.println();
-  //Serial.println(Car->PEDALS.getAPPS1());
-  //Serial.println(Car->PEDALS.getAPPS2());
-  //Serial.println(Car->PEDALS.getBrakePressureF());
-  //Serial.println(Car->PEDALS.getBrakePressureR());
+  // can1.read(msg);
+  // if(msg.id == 0xC8){
+  // for(int i =0; i < 8; i++){
+  //   //Serial.print(msg.buf[i], HEX);
+  //   Pedals[0][i] = msg.buf[i];
+  // }
+  // }
+  // Serial.println();
+  
   //Serial.println("test");
   // for(int i = 0; i < 8; i ++){
   //   Pedals[0][i] = msg.buf[i];
   //   Serial.println(Pedals[0][i]);
   // }
-  test.concact_nodes(inverter, ecu, wheel1, wheel2, wheel3, wheel4, IMU, GPS, Pedals, ACU, BCM, Dash, EM);
-  //Car->PEDALS.wipe();
+  test.concact_nodes(inverter, ecu, wheel1, wheel2, wheel3, wheel4, IMU, GPS, Car->PEDALS.data, ACU, BCM, Dash, EM);
+  //Serial.println(Car->PEDALS.getAPPS1());
+  //Serial.println(Car->PEDALS.getAPPS2());
+  //Serial.println(Car->PEDALS.getBrakePressureF());
+  //Serial.println(Car->PEDALS.getBrakePressureR());
+  //delay(2);
+  //Serial.println("done");
   if(HWRSerial.available() > 0){
     
     //gen_random(768, test.only_nodes);
@@ -90,10 +95,7 @@ void loop() {
       //Serial.println("\n ack recieved");
       digitalWrite(LED_BUILTIN, HIGH);
       HWRSerial.write(test.get_only_nodes(), 768);
-      msg1.id = 0x69420;
-      msg1.flags.extended = true;
-      msg1.buf[0] = 0xFF;
-      can1.write(msg1);
+      
       
       //Serial.println("sent");
       //added this to check if it was a problem with flush 

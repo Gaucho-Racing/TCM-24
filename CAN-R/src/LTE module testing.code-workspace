@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../LTE module testing"
+		},
+		{
+			"name": "CAN-R",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.tpp": "cpp"
+		}
+	}
+}
