@@ -10,12 +10,6 @@
 #define SerialAT Serial1 //for communication with the LTE module
 
 #define TINY_GSM_DEBUG SerialMon
-// Add a reception delay, if needed.
-// This may be needed for a fast processor at a slow baud rate.
-// #define TINY_GSM_YIELD() { delay(2); }
-
-// Define how you're planning to connect to the internet
-// These defines are only for this example; they are not needed in other code.
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI true
 
@@ -26,22 +20,8 @@ unsigned long requestTime;
 bool clear;
 unsigned long lastMsg;
 
-const char *ssid = "x"; 
-const char *password = "xa"; 
-/*
-TODO: 
-1. write the code needed to send CAN frames from teensy to the esp 32 vie the serial 2 ports. This will need some sort of ID
-bits or like an ID byte inorder to specify what kind of byte array is coming from the teensy.
- -figure out how to efficiently add some ID bytes/bits to the start of very CAN frame that gets sent to the serial monitor
- this would allow for ease of implementation and classification later on.
-2. implement a fucntion that take information from the serial 2 pins and sort them into thier respective 
-topics for sending to cloud.
- -Remove the ID byte or bits from the data incoming, this will most likely be done with some header nad external file to make the code less
- fucking ugly 
-3. Work on getting the topics to properly send into the correct channels.
- -Convert to sending byte arrays rather than the goofy shit I hva currently 
- -Specify all the topics based on the CAN on google sheets. 
-*/
+const char *ssid = "ELLA"; 
+const char *password = "12345678"; 
 
 // set GSM PIN, if any
 #define GSM_PIN ""
@@ -58,7 +38,7 @@ const char wifiPass[] = "xx";
 
 // MQTT details
 
-const char* mqtt_server = "uozsidekg2mq-lpkdpd5lianf.cedalo.dev"; //replace with ngrok from mpache
+const char* mqtt_server = "mapache.gauchoracing.com"; //replace with ngrok from mpache
 const char* mqtt_username = "gr24"; // replace with your Username
 const char* mqtt_password = "gr24"; // replace with your Password
 const int mqtt_port = 1883;
@@ -125,6 +105,108 @@ Ticker tick;
 int ledStatus = LOW;
 uint32_t lastReconnectAttempt = 0;
 
+//mqtt node names for loop stuff
+String mqtt_nodes[] = {
+ "gr24/inverter",
+ "gr24/vdm",
+ "gr24/wheel1",
+ "gr24/wheel2",
+ "gr24/wheel3",
+ "gr24/wheel4",
+ "gr24/IMU",
+ "gr24/GPS",
+ "gr24/Pedals",
+ "gr24/ACU",
+ "gr24/BCM",
+ "gr24/Dash",
+ "gr24/EM"
+};
+
+
+void send(){
+  unsigned long now = millis();
+  result.inverter[43] = (byte) now;
+  result.inverter[42] = (byte) (now >> 8);
+  result.inverter[41] = (byte) (now >> 16);
+  result.inverter[40] = (byte) (now >> 24);
+  
+  result.vdm[51] = (byte) now;
+  result.vdm[50] = (byte) (now >> 8);
+  result.vdm[49] = (byte) (now >> 16);
+  result.vdm[48] = (byte) (now >> 24);
+  
+  result.wheel1[43] = (byte) now;
+  result.wheel1[42] = (byte) (now >> 8);
+  result.wheel1[41] = (byte) (now >> 16);
+  result.wheel1[40] = (byte) (now >> 24);
+  
+  result.wheel2[43] = (byte) now;
+  result.wheel2[42] = (byte) (now >> 8);
+  result.wheel2[41] = (byte) (now >> 16);
+  result.wheel2[40] = (byte) (now >> 24);
+  
+  result.wheel3[43] = (byte) now;
+  result.wheel3[42] = (byte) (now >> 8);
+  result.wheel3[41] = (byte) (now >> 16);
+  result.wheel3[40] = (byte) (now >> 24);
+  
+  result.wheel4[43] = (byte) now;
+  result.wheel4[42] = (byte) (now >> 8);
+  result.wheel4[41] = (byte) (now >> 16);
+  result.wheel4[40] = (byte) (now >> 24);
+  
+  result.IMU[27] = (byte) now;
+  result.IMU[26] = (byte) (now >> 8);
+  result.IMU[25] = (byte) (now >> 16);
+  result.IMU[24] = (byte) (now >> 24);
+  
+  result.GPS[35] = (byte) now;
+  result.GPS[34] = (byte) (now >> 8);
+  result.GPS[33] = (byte) (now >> 16);
+  result.GPS[32] = (byte) (now >> 24);
+  
+  result.Pedals[19] = (byte) now;
+  result.Pedals[18] = (byte) (now >> 8);
+  result.Pedals[17] = (byte) (now >> 16);
+  result.Pedals[16] = (byte) (now >> 24);
+  
+  result.ACU[403] = (byte) now;
+  result.ACU[402] = (byte) (now >> 8);
+  result.ACU[401] = (byte) (now >> 16);
+  result.ACU[400] = (byte) (now >> 24);
+  
+  result.TCM[11] = (byte) now;
+  result.TCM[10] = (byte) (now >> 8);
+  result.TCM[9] = (byte) (now >> 16);
+  result.TCM[8] = (byte) (now >> 24);
+  
+  result.Dash[27] = (byte) now;
+  result.Dash[26] = (byte) (now >> 8);
+  result.Dash[25] = (byte) (now >> 16);
+  result.Dash[24] = (byte) (now >> 24);
+  
+  result.EM[19] = (byte) now;
+  result.EM[18] = (byte) (now >> 8);
+  result.EM[17] = (byte) (now >> 16);
+  result.EM[16] = (byte) (now >> 24);
+  
+  mqtt.publish("gr24/test/inverter", result.inverter, 44);
+  mqtt.publish("gr24/test/vdm", result.inverter, 52);
+  mqtt.publish("gr24/test/bcm/fr", result.wheel1, 44);
+  mqtt.publish("gr24/test/bcm/fl", result.wheel2, 44);
+  mqtt.publish("gr24/test/bcm/rr", result.wheel3, 44);
+  mqtt.publish("gr24/test/bcm/rl", result.wheel4, 44);
+  mqtt.publish("gr24/test/bcm/imu", result.IMU, 28);
+  mqtt.publish("gr24/test/imu/gps", result.inverter, 36);
+  mqtt.publish("gr24/test/pedal", result.Pedals, 20);
+  mqtt.publish("gr24/test/acu", result.ACU, 404);
+  mqtt.publish("gr24/test/tcm", result.TCM, 12);
+  mqtt.publish("gr24/test/dash", result.Dash, 28);
+  mqtt.publish("gr24/test/em", result.EM, 20);
+
+
+}
+
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -144,9 +226,9 @@ void reconnect() {
     if (mqtt.connect(clientId.c_str(), mqtt_username, mqtt_password)) {
       Serial.println("connected!");
       // Once connected, publish an announcement…
-      mqtt.publish("testTopic", "connected!");
+      //mqtt.publish("testTopic", "connected!");
       // … and resubscribe
-      mqtt.subscribe("testTopic");
+      //mqtt.subscribe("testTopic");
     } else {
       Serial.print("failed, rc = ");
       Serial.print(mqtt.state());
@@ -283,6 +365,7 @@ void gen_random(const int len, char *res) {
   strcat(res, tmp);
 }
 
+
 void loop()
 { /*    //connections statements for network and gps
     if (!modem.isNetworkConnected()) {
@@ -320,13 +403,15 @@ void loop()
         reconnect();
     }
     */
-    
+    if (!esp32.connected()) {
+        reconnect();
+    }
     //code from es32 serial
     //sends a request every time its ready to recieve more data
     byte data[768];
     if(!request){
         Serial.write(0x06);
-        Serial.println("here");
+        //Serial.println("here");
         requestTime = millis();
         request = true;
     }
@@ -351,32 +436,16 @@ void loop()
         Serial.readBytes(data, 768);
         clear = true;
         request = false;
-        Serial.print("read");
+        //Serial.print("read");
         result.take_nodes(data);
         unsigned long now_mqtt = millis();
-        if (now_mqtt - lastMsg >100) {
+        if (now_mqtt - lastMsg > 50) {
         lastMsg = now_mqtt;
-        char msg[16];
-        itoa(millis(), msg, 10);
-        Serial.print("Publish message: ");
-        for(int i = 0 ; i < 8; i ++){
-            Serial.print(result.Pedals[i], HEX);
-        }
-        mqtt.publish("gr24/pedal", result.Pedals, 8);
-        Serial.println();
+        send();
     }
-    }
-    unsigned long now_mqtt = millis();
-    if (now_mqtt - lastMsg >50) {
-        lastMsg = now_mqtt;
-        char msg[16] = {0x00};
-        //gen_random(16, msg);
-        itoa(millis(), msg, 8);
-        Serial.print("Publish message: ");
-        mqtt.publish("gr24/pedal", msg, 8);
-        Serial.println();
     }
 
     //no clue what mqtt.loop() does but its probably important
     mqtt.loop();   
 }
+
