@@ -10,8 +10,8 @@
 #define SerialAT Serial1 //for communication with the LTE module
 
 #define TINY_GSM_DEBUG SerialMon
-#define TINY_GSM_USE_GPRS true
-#define TINY_GSM_USE_WIFI true
+#define TINY_GSM_USE_GPRS false
+#define TINY_GSM_USE_WIFI false
 
 //needed for Serial to be decoded
 bool request;
@@ -20,8 +20,8 @@ unsigned long requestTime;
 bool clear;
 unsigned long lastMsg;
 
-const char *ssid = "ELLA"; 
-const char *password = "12345678"; 
+const char *ssid = "BK1031 iPhone"; 
+const char *password = "pogchamp"; 
 
 // set GSM PIN, if any
 #define GSM_PIN ""
@@ -72,12 +72,12 @@ TinyGsm        modem(SerialAT);
 #endif
 TinyGsmClient client(modem);
 
-WiFiClient esp32;
-PubSubClient  mqtt(esp32);
+//WiFiClient esp32;
+//PubSubClient  mqtt(esp32);
 // TinyGsm modem(SerialAT);
-// TinyGsmClient tcpClient(modem);
+// TinyGsmClient client(modem);
 // SSLClient ssl_client(&tcpClient);
-// PubSubClient mqttClient(ssl_client);
+PubSubClient mqtt(client);
 
 Ticker tick;
 
@@ -208,27 +208,29 @@ void send(){
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
+  // Serial.print("Message arrived [");
+  // Serial.print(topic);
+  // Serial.print("] ");
+  mqtt.publish("gr24/test/pong", payload, 8);
+  // for (int i = 0; i < length; i++) {
+    
+  //   Serial.print((char)payload[i]);
+  // }
+  // Serial.println();
 }
 
 void reconnect() {
   // Loop until we’re reconnected
   while (!mqtt.connected()) {
     Serial.print("Attempting MQTT connection… ");
-    String clientId = "ESP32Client";
+    String clientId = "TCM";
     // Attempt to connect
     if (mqtt.connect(clientId.c_str(), mqtt_username, mqtt_password)) {
       Serial.println("connected!");
       // Once connected, publish an announcement…
       //mqtt.publish("testTopic", "connected!");
       // … and resubscribe
-      //mqtt.subscribe("testTopic");
+      mqtt.subscribe("gr24/test/ping");
     } else {
       Serial.print("failed, rc = ");
       Serial.print(mqtt.state());
@@ -248,106 +250,106 @@ void setup()
     request = false;
     clear = true;
     delay(10);
-//     SerialAT.begin(UART_BAUD, SERIAL_8N1, MODEM_RX, MODEM_TX);
+    SerialAT.begin(UART_BAUD, SERIAL_8N1, MODEM_RX, MODEM_TX);
     
-//     // Set LED OFF
-//     pinMode(LED_PIN, OUTPUT);
-//     digitalWrite(LED_PIN, HIGH);
-//     pinMode(MODEM_PWRKEY, OUTPUT);
-//     digitalWrite(MODEM_PWRKEY, HIGH);
-//     delay(300);
-//     digitalWrite(MODEM_PWRKEY, LOW);
+    // Set LED OFF
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, HIGH);
+    pinMode(MODEM_PWRKEY, OUTPUT);
+    digitalWrite(MODEM_PWRKEY, HIGH);
+    delay(300);
+    digitalWrite(MODEM_PWRKEY, LOW);
 
 
-//     /*
-//     MODEM_FLIGHT IO:25 Modulator flight mode control,
-//     need to enable modulator, this pin must be set to high
-//     */
-//     pinMode(MODEM_FLIGHT, OUTPUT);
-//     digitalWrite(MODEM_FLIGHT, HIGH);
+    /*
+    MODEM_FLIGHT IO:25 Modulator flight mode control,
+    need to enable modulator, this pin must be set to high
+    */
+    pinMode(MODEM_FLIGHT, OUTPUT);
+    digitalWrite(MODEM_FLIGHT, HIGH);
 
-//     // SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
-//     // if (!SD.begin(SD_CS)) {
-//     //     Serial.println("SDCard MOUNT FAIL");
-//     // } else {
-//     //     uint32_t cardSize = SD.cardSize() / (1024 * 1024);
-//     //     String str = "SDCard Size: " + String(cardSize) + "MB";
-//     //     Serial.println(str);
-//     // }
+    // SPI.begin(SD_SCLK, SD_MISO, SD_MOSI, SD_CS);
+    // if (!SD.begin(SD_CS)) {
+    //     Serial.println("SDCard MOUNT FAIL");
+    // } else {
+    //     uint32_t cardSize = SD.cardSize() / (1024 * 1024);
+    //     String str = "SDCard Size: " + String(cardSize) + "MB";
+    //     Serial.println(str);
+    // }
 
-//     Serial.println("\nWait...");
+    Serial.println("\nWait...");
 
-//     delay(1000);
-
-
-//     // Restart takes quite some time
-//     // To skip it, call init() instead of restart()
-//     DBG("Initializing modem...");
-//     if (!modem.init()) {
-//         DBG("Failed to restart modem, delaying 10s and retrying");
-
-//     }
-
-//     String ret;
-//     //    do {
-//     //        ret = modem.setNetworkMode(2);
-//     //        delay(500);
-//     //    } while (ret != "OK");
-//     ret = modem.setNetworkMode(2);
-//     DBG("setNetworkMode:", ret);
-
-//     String name = modem.getModemName();
-//     DBG("Modem Name:", name);
-
-//     String modemInfo = modem.getModemInfo();
-//     DBG("Modem Info:", modemInfo);
-
-// #if TINY_GSM_USE_GPRS
-//     // Unlock your SIM card with a PIN if needed
-//     if (GSM_PIN && modem.getSimStatus() != 3) {
-//         modem.simUnlock(GSM_PIN);
-//     }
-// #endif
-
-//     SerialMon.print("Waiting for network...");
-//     if (!modem.waitForNetwork()) {
-//         SerialMon.println(" fail");
-//         delay(10000);
-//         return;
-//     }
-//     SerialMon.println(" success");
-
-//     if (modem.isNetworkConnected()) {
-//         SerialMon.println("Network connected");
-//     }
-
-// #if TINY_GSM_USE_GPRS
-//     // GPRS connection parameters are usually set after network registration
-//     SerialMon.print(F("Connecting to "));
-//     SerialMon.print(apn);
-//     if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-//         SerialMon.println(" fail");
-//         delay(10000);
-//         return;
-//     }
-//     SerialMon.println(" success");
-
-//     if (modem.isGprsConnected()) {
-//         SerialMon.println("GPRS connected");
-//     }
-// #endif
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi ..");
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print('.');
     delay(1000);
-  }
-  Serial.println(WiFi.localIP());
 
-    // MQTT mqtt_server setup
-    mqtt.setServer(mqtt_server, mqtt_port);
-    mqtt.setCallback(mqttCallback);
+
+    // Restart takes quite some time
+    // To skip it, call init() instead of restart()
+    DBG("Initializing modem...");
+    if (!modem.init()) {
+        DBG("Failed to restart modem, delaying 10s and retrying");
+
+    }
+
+    String ret;
+    //    do {
+    //        ret = modem.setNetworkMode(2);
+    //        delay(500);
+    //    } while (ret != "OK");
+    ret = modem.setNetworkMode(2);
+    DBG("setNetworkMode:", ret);
+
+    String name = modem.getModemName();
+    DBG("Modem Name:", name);
+
+    String modemInfo = modem.getModemInfo();
+    DBG("Modem Info:", modemInfo);
+
+#if TINY_GSM_USE_GPRS
+    // Unlock your SIM card with a PIN if needed
+    if (GSM_PIN && modem.getSimStatus() != 3) {
+        modem.simUnlock(GSM_PIN);
+    }
+#endif
+
+    SerialMon.print("Waiting for network...");
+    if (!modem.waitForNetwork()) {
+        SerialMon.println(" fail");
+        delay(10000);
+        return;
+    }
+    SerialMon.println(" success");
+
+    if (modem.isNetworkConnected()) {
+        SerialMon.println("Network connected");
+    }
+
+#if TINY_GSM_USE_GPRS
+    // GPRS connection parameters are usually set after network registration
+    SerialMon.print(F("Connecting to "));
+    SerialMon.print(apn);
+    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+        SerialMon.println(" fail");
+        delay(10000);
+        return;
+    }
+    SerialMon.println(" success");
+
+    if (modem.isGprsConnected()) {
+        SerialMon.println("GPRS connected");
+    }
+#endif
+  // WiFi.mode(WIFI_STA);
+  // WiFi.begin(ssid, password);
+  // Serial.print("Connecting to WiFi ..");
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   Serial.print('.');
+  //   delay(1000);
+  // }
+  // Serial.println(WiFi.localIP());
+
+  //   // MQTT mqtt_server setup
+  //   mqtt.setServer(mqtt_server, mqtt_port);
+  //   mqtt.setCallback(mqttCallback);
 
 }
 
@@ -367,7 +369,7 @@ void gen_random(const int len, char *res) {
 
 
 void loop()
-{ /*    //connections statements for network and gps
+{     //connections statements for network and gps
     if (!modem.isNetworkConnected()) {
         SerialMon.println("Network disconnected");
         if (!modem.waitForNetwork(180000L, true)) {
@@ -402,10 +404,14 @@ void loop()
     if (!client.connected()) {
         reconnect();
     }
-    */
-    if (!esp32.connected()) {
-        reconnect();
-    }
+    
+    // if (!esp32.connected()) {
+    //     reconnect();
+    // }
+    // while (WiFi.status() != WL_CONNECTED) {
+    // Serial.print("NC_WIFI");
+    // delay(1000);
+    // }
     //code from es32 serial
     //sends a request every time its ready to recieve more data
     byte data[768];
@@ -420,8 +426,8 @@ void loop()
     unsigned long now_packet = millis();
     if(now_packet - requestTime > 1000){
         requestTime = now_packet;
-        Serial.print(Serial.available());
-        Serial.print("clear");
+        //Serial.print(Serial.available());
+        //Serial.print("clear");
         if(clear){
         while(Serial.available()){
             Serial.read();
