@@ -18,6 +18,8 @@ const char *ssid = "BK1031 iPhone";
 const char *password = "pogchamp"; 
 
 // MQTT details
+const char* vehicle_id = "testy";
+
 const char* mqtt_server = "mapache.gauchoracing.com"; //replace with ngrok from mpache
 const char* mqtt_username = "gr24"; // replace with your Username
 const char* mqtt_password = "gr24"; // replace with your Password
@@ -44,35 +46,35 @@ void send(){
     result.vdm[49] = (byte) (now >> 16);
     result.vdm[48] = (byte) (now >> 24);
 
-    result.wheel1[43] = (byte) now;
-    result.wheel1[42] = (byte) (now >> 8);
-    result.wheel1[41] = (byte) (now >> 16);
-    result.wheel1[40] = (byte) (now >> 24);
+    // result.wheel1[43] = (byte) now;
+    // result.wheel1[42] = (byte) (now >> 8);
+    // result.wheel1[41] = (byte) (now >> 16);
+    // result.wheel1[40] = (byte) (now >> 24);
 
-    result.wheel2[43] = (byte) now;
-    result.wheel2[42] = (byte) (now >> 8);
-    result.wheel2[41] = (byte) (now >> 16);
-    result.wheel2[40] = (byte) (now >> 24);
+    // result.wheel2[43] = (byte) now;
+    // result.wheel2[42] = (byte) (now >> 8);
+    // result.wheel2[41] = (byte) (now >> 16);
+    // result.wheel2[40] = (byte) (now >> 24);
 
-    result.wheel3[43] = (byte) now;
-    result.wheel3[42] = (byte) (now >> 8);
-    result.wheel3[41] = (byte) (now >> 16);
-    result.wheel3[40] = (byte) (now >> 24);
+    // result.wheel3[43] = (byte) now;
+    // result.wheel3[42] = (byte) (now >> 8);
+    // result.wheel3[41] = (byte) (now >> 16);
+    // result.wheel3[40] = (byte) (now >> 24);
 
-    result.wheel4[43] = (byte) now;
-    result.wheel4[42] = (byte) (now >> 8);
-    result.wheel4[41] = (byte) (now >> 16);
-    result.wheel4[40] = (byte) (now >> 24);
+    // result.wheel4[43] = (byte) now;
+    // result.wheel4[42] = (byte) (now >> 8);
+    // result.wheel4[41] = (byte) (now >> 16);
+    // result.wheel4[40] = (byte) (now >> 24);
 
-    result.IMU[27] = (byte) now;
-    result.IMU[26] = (byte) (now >> 8);
-    result.IMU[25] = (byte) (now >> 16);
-    result.IMU[24] = (byte) (now >> 24);
+    // result.IMU[27] = (byte) now;
+    // result.IMU[26] = (byte) (now >> 8);
+    // result.IMU[25] = (byte) (now >> 16);
+    // result.IMU[24] = (byte) (now >> 24);
 
-    result.GPS[35] = (byte) now;
-    result.GPS[34] = (byte) (now >> 8);
-    result.GPS[33] = (byte) (now >> 16);
-    result.GPS[32] = (byte) (now >> 24);
+    // result.GPS[35] = (byte) now;
+    // result.GPS[34] = (byte) (now >> 8);
+    // result.GPS[33] = (byte) (now >> 16);
+    // result.GPS[32] = (byte) (now >> 24);
 
     result.Pedals[19] = (byte) now;
     result.Pedals[18] = (byte) (now >> 8);
@@ -99,19 +101,27 @@ void send(){
     result.EM[17] = (byte) (now >> 16);
     result.EM[16] = (byte) (now >> 24);
 
-    mqtt.publish("gr24/test/inverter", result.inverter, 44);
-    mqtt.publish("gr24/test/vdm", result.vdm, 52);
-    mqtt.publish("gr24/test/bcm/fr", result.wheel1, 44);
-    mqtt.publish("gr24/test/bcm/fl", result.wheel2, 44);
-    mqtt.publish("gr24/test/bcm/rr", result.wheel3, 44);
-    mqtt.publish("gr24/test/bcm/rl", result.wheel4, 44);
-    mqtt.publish("gr24/test/bcm/imu", result.IMU, 28);
-    mqtt.publish("gr24/test/imu/gps", result.GPS, 36);
-    mqtt.publish("gr24/test/pedal", result.Pedals, 20);
-    mqtt.publish("gr24/test/acu", result.ACU, 404);
-    mqtt.publish("gr24/test/tcm", result.TCM, 12);
-    mqtt.publish("gr24/test/dash", result.Dash, 28);
-    mqtt.publish("gr24/test/em", result.EM, 20);
+    char topic[50];
+    sprintf(topic, "gr24/%s/inverter", vehicle_id);
+    mqtt.publish(topic, result.inverter, 44);
+
+    sprintf(topic, "gr24/%s/vdm", vehicle_id);
+    mqtt.publish(topic, result.vdm, 52);
+    
+    sprintf(topic, "gr24/%s/pedal", vehicle_id);
+    mqtt.publish(topic, result.Pedals, 20);
+    
+    sprintf(topic, "gr24/%s/acu", vehicle_id);
+    mqtt.publish(topic, result.ACU, 404);
+    
+    sprintf(topic, "gr24/%s/tcm", vehicle_id);
+    mqtt.publish(topic, result.TCM, 12);
+    
+    sprintf(topic, "gr24/%s/dash", vehicle_id);
+    mqtt.publish(topic, result.Dash, 28);
+    
+    sprintf(topic, "gr24/%s/em", vehicle_id);
+    mqtt.publish(topic, result.EM, 20);
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
