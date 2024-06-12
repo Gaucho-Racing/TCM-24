@@ -27,7 +27,7 @@ void leaked_nodes::concact_nodes(byte inverter[5][8], byte vdm[6][8], byte wheel
     convert2D(IMU, 3, 8, IMU1D);
     convert2D(GPS, 4, 8, GPS1D);
     convert2D(Pedals, 2, 8, Pedals1D);
-    convert2D(ACU, 40, 8, ACU1D);
+    convert2D(ACU, 50, 8, ACU1D);
     //bcm
     convert2D(Dash, 3, 8, Dash1D);
     convert2D(EM, 2, 8, EM1D);
