@@ -125,7 +125,9 @@ void send(){
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-    mqtt.publish("gr24/test/pong", payload, 8);
+    char topicString[50];
+    sprintf(topicString, "gr24/%s/pong", vehicle_id);
+    mqtt.publish(topicString, payload, 8);
 }
 
 void connectWifi() {
@@ -145,7 +147,9 @@ void reconnect() {
         String clientId = "TCM";
         if (mqtt.connect(clientId.c_str(), mqtt_username, mqtt_password)) {
             Serial.println("connected to mqtt!");
-            mqtt.subscribe("gr24/test/ping");
+            char topic[50];
+            sprintf(topic, "gr24/%s/ping", vehicle_id);
+            mqtt.subscribe(topic);
         } else {
             Serial.print("failed, rc = ");
             Serial.print(mqtt.state());
